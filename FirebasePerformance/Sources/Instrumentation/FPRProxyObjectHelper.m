@@ -17,6 +17,9 @@
 #import <objc/runtime.h>
 #import <string.h>
 
+// TODO: Revert to using GoogleUtilties for the superclass behavior and
+// skipping weak instance variables.
+// https://github.com/firebase/firebase-ios-sdk/issues/16469
 FOUNDATION_STATIC_INLINE NSArray<id> *FPRIvarObjectsForProxy(id proxy) {
   NSMutableArray<id> *array = [NSMutableArray array];
   // NSProxy subclasses can forward -class to a wrapped object, so use the runtime class.
