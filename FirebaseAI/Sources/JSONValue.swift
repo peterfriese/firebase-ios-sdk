@@ -100,13 +100,13 @@ extension JSONValue: Equatable {}
     var firebaseGeneratedContent: FirebaseAI.GeneratedContent {
       switch self {
       case .null:
-        return FirebaseAI.GeneratedContent(kind: .null, isComplete: true)
+        return FirebaseAI.GeneratedContent(kind: FirebaseAI.GeneratedContent.Kind.null, isComplete: true)
       case let .number(value):
-        return FirebaseAI.GeneratedContent(kind: .number(value), isComplete: true)
+        return FirebaseAI.GeneratedContent(kind: FirebaseAI.GeneratedContent.Kind.number(value), isComplete: true)
       case let .string(value):
         return value.firebaseGeneratedContent
       case let .bool(value):
-        return FirebaseAI.GeneratedContent(kind: .bool(value), isComplete: true)
+        return FirebaseAI.GeneratedContent(kind: FirebaseAI.GeneratedContent.Kind.bool(value), isComplete: true)
       case let .object(value):
         return value.firebaseGeneratedContent
       case let .array(value):
@@ -118,7 +118,7 @@ extension JSONValue: Equatable {}
   extension JSONObject {
     var firebaseGeneratedContent: FirebaseAI.GeneratedContent {
       return FirebaseAI.GeneratedContent(
-        kind: .structure(
+        kind: FirebaseAI.GeneratedContent.Kind.structure(
           properties: mapValues { $0.firebaseGeneratedContent },
           orderedKeys: keys.map { $0 }
         ),
@@ -130,7 +130,7 @@ extension JSONValue: Equatable {}
   extension [JSONValue] {
     var firebaseGeneratedContent: FirebaseAI.GeneratedContent {
       return FirebaseAI.GeneratedContent(
-        kind: .array(map { $0.firebaseGeneratedContent }),
+        kind: FirebaseAI.GeneratedContent.Kind.array(map { $0.firebaseGeneratedContent }),
         isComplete: true
       )
     }

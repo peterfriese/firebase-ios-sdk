@@ -337,7 +337,7 @@
         if text.isEmpty && !isComplete {
           return FirebaseAI.GeneratedContent(
             // TODO: Set `kind:` to `.array(...)`, `.bool()`, `.number()` based on schema type.
-            kind: .structure(properties: [:], orderedKeys: []),
+            kind: FirebaseAI.GeneratedContent.Kind.structure(properties: [:], orderedKeys: []),
             id: generationID,
             isComplete: isComplete
           )

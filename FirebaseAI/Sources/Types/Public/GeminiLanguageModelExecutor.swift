@@ -130,14 +130,6 @@
                 )
               )
 
-            case let .custom(customSegment):
-              throw LanguageModelError.unsupportedTranscriptContent(
-                LanguageModelError.UnsupportedTranscriptContent(
-                  unsupportedContent: [entry],
-                  debugDescription: "Unsupported custom segment in tool output: \(customSegment)"
-                )
-              )
-
             @unknown default:
               AILog.warning(
                 code: .unrecognizedSegmentType,
@@ -366,10 +358,10 @@
                     .image(imageAttachment))
                   action = .addAttachmentSegment(attachmentSegment)
                 } else {
-                  action = .updateCustomSegment(inlineDataPart)
+                  action = .appendText("", tokenCount: 0) // AS-002 spike patch: Beta 5 removed updateCustomSegment
                 }
               default:
-                action = .updateCustomSegment(inlineDataPart)
+                action = .appendText("", tokenCount: 0) // AS-002 spike patch: Beta 5 removed updateCustomSegment
               }
 
               await channel.send(.response(entryID: responseEntryID, action: action))
@@ -377,7 +369,7 @@
               await channel.send(
                 .response(
                   entryID: responseEntryID,
-                  action: .updateCustomSegment(fileDataPart)
+                  action: .appendText("", tokenCount: 0) // AS-002 spike patch: Beta 5 removed updateCustomSegment
                 )
               )
             case let functionCallPart as FunctionCallPart:
@@ -408,14 +400,14 @@
               await channel.send(
                 .response(
                   entryID: responseEntryID,
-                  action: .updateCustomSegment(executableCodePart)
+                  action: .appendText("", tokenCount: 0) // AS-002 spike patch: Beta 5 removed updateCustomSegment
                 )
               )
             case let codeExecutionResultPart as CodeExecutionResultPart:
               await channel.send(
                 .response(
                   entryID: responseEntryID,
-                  action: .updateCustomSegment(codeExecutionResultPart)
+                  action: .appendText("", tokenCount: 0) // AS-002 spike patch: Beta 5 removed updateCustomSegment
                 )
               )
             default:
@@ -431,21 +423,26 @@
           }
 
           // Handle additional metadata from the candidate
-          var updatedMetadata: [String: any Sendable & Codable & Equatable] = [:]
+          // AS-002 spike patch: Beta 5's updateMetadata takes `[String: any ConvertibleToGeneratedContent]`,
+          // so metadata values are JSON-encoded into String (String: Generable: ConvertibleToGeneratedContent).
+          func jsonEncoded<T: Encodable>(_ value: T) -> String {
+            (try? String(data: JSONEncoder().encode(value), encoding: .utf8)) ?? ""
+          }
+          var updatedMetadata: [String: any FoundationModels.ConvertibleToGeneratedContent] = [:]
           if let groundingMetadata = candidate.groundingMetadata {
-            updatedMetadata[CandidateKeys.groundingMetadata] = groundingMetadata
+            updatedMetadata[CandidateKeys.groundingMetadata] = jsonEncoded(groundingMetadata)
           }
 
           if let citationMetadata = candidate.citationMetadata {
-            updatedMetadata[CandidateKeys.citationMetadata] = citationMetadata
+            updatedMetadata[CandidateKeys.citationMetadata] = jsonEncoded(citationMetadata)
           }
 
           if let urlContextMetadata = candidate.urlContextMetadata {
-            updatedMetadata[CandidateKeys.urlContextMetadata] = urlContextMetadata
+            updatedMetadata[CandidateKeys.urlContextMetadata] = jsonEncoded(urlContextMetadata)
           }
 
           if let finishReason = candidate.finishReason {
-            updatedMetadata[CandidateKeys.finishReason] = finishReason
+            updatedMetadata[CandidateKeys.finishReason] = jsonEncoded(finishReason)
           }
 
           if let finishMessage = candidate.finishMessage {
@@ -453,7 +450,7 @@
           }
 
           if !candidate.safetyRatings.isEmpty {
-            updatedMetadata[CandidateKeys.safetyRatings] = candidate.safetyRatings
+            updatedMetadata[CandidateKeys.safetyRatings] = jsonEncoded(candidate.safetyRatings)
           }
 
           if !updatedMetadata.isEmpty {
@@ -559,13 +556,6 @@
               debugDescription: "Unsupported attachment segment in instructions: \(attachment)"
             )
           )
-        case let .custom(customSegment):
-          throw LanguageModelError.unsupportedTranscriptContent(
-            LanguageModelError.UnsupportedTranscriptContent(
-              unsupportedContent: [Transcript.Entry.instructions(self)],
-              debugDescription: "Unsupported custom segment in instructions: \(customSegment)"
-            )
-          )
         @unknown default:
           // TODO: Determine whether to throw
           AILog.warning(
@@ -617,13 +607,6 @@
             )
             continue
           }
-        case let .custom(customSegment):
-          throw LanguageModelError.unsupportedTranscriptContent(
-            LanguageModelError.UnsupportedTranscriptContent(
-              unsupportedContent: [Transcript.Entry.prompt(self)],
-              debugDescription: "Unsupported custom segment in prompt: \(customSegment)"
-            )
-          )
         @unknown default:
           // TODO: Determine whether to throw
           AILog.warning(
@@ -662,13 +645,6 @@
             LanguageModelError.UnsupportedTranscriptContent(
               unsupportedContent: [Transcript.Entry.response(self)],
               debugDescription: "Unsupported attachment segment in response: \(attachment)"
-            )
-          )
-        case let .custom(customSegment):
-          throw LanguageModelError.unsupportedTranscriptContent(
-            LanguageModelError.UnsupportedTranscriptContent(
-              unsupportedContent: [Transcript.Entry.response(self)],
-              debugDescription: "Unsupported custom segment in response: \(customSegment)"
             )
           )
         @unknown default:

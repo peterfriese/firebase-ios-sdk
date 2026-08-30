@@ -25,7 +25,7 @@
 
   extension String: FirebaseAI.ConvertibleToGeneratedContent {
     var firebaseGeneratedContent: FirebaseAI.GeneratedContent {
-      FirebaseAI.GeneratedContent(kind: .string(self), isComplete: true)
+      FirebaseAI.GeneratedContent(kind: FirebaseAI.GeneratedContent.Kind.string(self), isComplete: true)
     }
   }
 
